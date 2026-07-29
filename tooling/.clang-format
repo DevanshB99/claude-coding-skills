@@ -1,0 +1,4 @@
+# Google C++ style, as shipped in clang-format.
+# Copy to your project root as `.clang-format`.
+BasedOnStyle: Google
+ColumnLimit: 80

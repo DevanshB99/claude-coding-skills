@@ -1,0 +1,7 @@
+#main .content div.box p { color: #FF0000 !important; margin: 0px; }
+#main .content div.box p.big { font-size: 20px !important; }
+#sidebar { width: 300px; float: left }
+#sidebar ul li a { color: #0000FF; text-decoration: none !important }
+.redText { color: #FF0000; }
+.blueText { color: #0000FF; }
+#main .content div.box p span { opacity: .5; padding: 0px 10px 0px 10px }
