@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quadratic calculator</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <main class="app">
+      <h1>Quadratic calculator</h1>
+      <p class="lede">
+        Solve and plot a x<sup>2</sup> + b x + c = 0.
+      </p>
+
+      <form class="coefficients" id="coefficient-form">
+        <div class="field">
+          <label for="input-a">a</label>
+          <input id="input-a" name="a" type="text" inputmode="decimal"
+                 value="1" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="input-b">b</label>
+          <input id="input-b" name="b" type="text" inputmode="decimal"
+                 value="-3" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="input-c">c</label>
+          <input id="input-c" name="c" type="text" inputmode="decimal"
+                 value="2" autocomplete="off" required>
+        </div>
+        <button type="submit">Solve</button>
+      </form>
+
+      <p class="notice" id="notice" hidden></p>
+
+      <section class="results" id="results" hidden>
+        <h2>Roots</h2>
+        <dl class="summary">
+          <dt>Equation</dt>
+          <dd id="out-equation"></dd>
+          <dt>Nature</dt>
+          <dd id="out-nature"></dd>
+          <dt>Discriminant</dt>
+          <dd id="out-discriminant"></dd>
+          <dt>Root 1</dt>
+          <dd id="out-root-1"></dd>
+          <dt>Root 2</dt>
+          <dd id="out-root-2"></dd>
+          <dt>Vertex</dt>
+          <dd id="out-vertex"></dd>
+        </dl>
+
+        <h2>Plot</h2>
+        <figure class="plot">
+          <svg id="plot" viewBox="0 0 640 420" role="img"
+               aria-labelledby="plot-caption"></svg>
+          <figcaption id="plot-caption">
+            Parabola with its vertex and any real roots marked.
+          </figcaption>
+        </figure>
+      </section>
+    </main>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

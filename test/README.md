@@ -3,7 +3,8 @@
 A real comparison of generated code with and without the skill loaded. Raw output from both arms is
 committed unedited under `runs/` so you can read it yourself rather than trust the scoring.
 
-**Date:** 2026-07-29 · **Model:** Claude Opus 5, both arms · **Prompt:** see `prompt.md`
+**Date:** 2026-07-29 · **Model:** Claude Opus 5, all arms · **Prompt:** see `prompt.md`
+**Runs:** Python (`runs/`), C++ (`runs-cpp/`)
 
 ## Method
 
@@ -181,6 +182,72 @@ means the value is concentrated in a handful of rules rather than spread evenly.
 
 Cost: the treatment arm took ~11 minutes and 76k tokens against ~8 minutes and 49k, and produced 68% more
 Python. Some of that is real value (tests, validation); some is structure a small tool may not need.
+
+## Second run: C++
+
+Same method, same prompt with "C++" substituted for "python". Raw output in `runs-cpp/`. Both arms
+compile clean under `-Wall -Wextra -Wpedantic` on g++ 13.
+
+| | Baseline | Treatment |
+|---|---|---|
+| `throw` / `catch` | **0** | **0** |
+| raw `new` / `delete` | **0** | **0** |
+| default lambda captures `[=]` `[&]` | **3** | **0** |
+| `[[nodiscard]]` | 0 | **12** |
+| `const` member functions | 0 | 2 |
+| `include/` separated from `src/` | no | **yes** |
+| Unit tests | **none** | 26 assertions, passing |
+| Source LOC | 893 | 991 |
+
+**The C++ baseline was already close to Google style** — PascalCase functions, `#ifndef` guards, no
+exceptions, no raw `new`/`delete`, no `NULL`, no C-style casts. That is not luck: Google's C++ guide is
+influential enough to be the ambient default for this kind of code, so the skill has less room to add
+value than in Python.
+
+What it did add: **tests, which the baseline omitted entirely**; the three default lambda captures
+eliminated; `[[nodiscard]]` on fallible returns; and a public `include/quadcalc/` surface separated from
+`src/`. The error style converged independently — the baseline returned a `CoefficientOr` struct, the
+treatment a `SolveOutcome` enum, and neither reached for exceptions.
+
+## Where the skill made things worse: the front end
+
+Both languages showed the same regression, and it is a real finding rather than a fluke.
+
+| | Python baseline | Python treatment | C++ baseline | C++ treatment |
+|---|---|---|---|---|
+| Front-end LOC | 708 | 294 | 498 | 468 |
+| Client JS | 348 | **56** | canvas | none |
+| Plot | canvas, interactive | static SVG | canvas, interactive | static SVG |
+| Hover crosshair / tooltip | yes | **no** | yes | **no** |
+| CSS custom properties | 39 | **18** | — | — |
+
+Three causes, in order of how much they mattered:
+
+1. **The testability rule selected a static architecture.** Both treatment arms moved plotting
+   server-side into a pure function so it could be unit-tested (`test_plotting.py`, `plot.cc`). Both
+   baselines drew on a client `<canvas>` — untestable in that setup, but interactive, with computed
+   ticks, hover readouts, and `devicePixelRatio` handling for crisp HiDPI output. The skill bought a
+   test and paid for it in interactivity.
+2. **Scope discipline read as "do not add polish."** The baselines volunteered theme toggles, stat
+   tiles, data tables and hover tooltips. The treatment arms, told not to build for "requirements that
+   do not exist yet", declined. That rule was written about code architecture — its examples are
+   parameters, hooks and base classes — and generalised badly to UI, where affordances *are* the request.
+3. **The guides could only subtract.** All forty HTML/CSS rules were prohibitions or accessibility
+   requirements. A grep for `hierarchy|spacing scale|type scale|contrast|elevation|motion|polish` found
+   nothing. The skill removed options and supplied no design judgement to replace them.
+
+A sharper version of the same problem: the treatment arm satisfied "declare values once as custom
+properties" by creating `tokens.css` — with **18 tokens against the baseline's 39, which included a full
+light and dark pair.** The rule checks that a token file exists. Nothing checks whether the scale inside
+it is any good. File count is not design quality, which qualifies the "better CSS modularity" claim from
+the Python run.
+
+**Fixed in response:** `SKILL.md` scope discipline now states that it governs code architecture and never
+what the user sees, and that no rule justifies a worse result — less interactive, less accessible, uglier
+or slower means the rule is being misapplied. `languages/html-css/style.md` gained a **quality floor**:
+interaction states on every control, feedback for every action, a spacing scale, type hierarchy, contrast
+ratios, both colour schemes, and 360px responsiveness — with an explicit statement that visual design
+beyond the floor is out of scope and should defer to dedicated guidance.
 
 ## Reproducing
 

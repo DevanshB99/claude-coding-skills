@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quadratic Calculator</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --panel: #ffffff;
+    --ink: #16191d;
+    --muted: #6b7280;
+    --line: #dfe3e8;
+    --accent: #2f6df6;
+    --accent-soft: #e8efff;
+    --root: #d9480f;
+    --vertex: #0b7285;
+    --grid: #eceff3;
+    --axis: #aab2bd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11141a;
+      --panel: #181c23;
+      --ink: #e8eaee;
+      --muted: #98a1b0;
+      --line: #262c36;
+      --accent: #6c9bff;
+      --accent-soft: #1b2437;
+      --root: #ff9b6a;
+      --vertex: #4ecbdd;
+      --grid: #21262f;
+      --axis: #48505c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    padding: 28px 24px 8px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+  h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+  header p { margin: 6px 0 0; color: var(--muted); font-size: 14px; }
+  main {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 16px 24px 48px;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    main { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px;
+  }
+  .eq {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+  .eq input {
+    width: 68px;
+    padding: 8px 6px;
+    text-align: center;
+    font: inherit;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+  .eq input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    padding: 9px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+    font-weight: 600;
+  }
+  button:hover { filter: brightness(1.05); }
+  .presets { margin-top: 14px; }
+  .presets h3, .card h3 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .chip {
+    padding: 5px 10px;
+    font-size: 13px;
+    border-radius: 999px;
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .summary {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    font-size: 14px;
+  }
+  dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 14px;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  dt { color: var(--muted); font-size: 13px; }
+  dd { margin: 0; font-size: 14px; }
+  ol.steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink); }
+  ol.steps li { margin-bottom: 5px; }
+  canvas { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .plotmeta {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .legend span { margin-right: 12px; white-space: nowrap; }
+  .swatch {
+    display: inline-block;
+    width: 10px; height: 10px;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: baseline;
+  }
+  .stack { display: grid; gap: 20px; }
+  .err {
+    margin-top: 12px;
+    color: var(--root);
+    font-size: 13.5px;
+    min-height: 1em;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Quadratic Calculator</h1>
+  <p>Solves ax&sup2; + bx + c = 0 in C++ and plots the parabola. Roots, vertex and discriminant are computed server-side.</p>
+</header>
+
+<main>
+  <section class="card">
+    <div class="eq">
+      <input id="a" type="text" inputmode="decimal" value="1" aria-label="coefficient a"><span>x&sup2; +</span>
+      <input id="b" type="text" inputmode="decimal" value="-3" aria-label="coefficient b"><span>x +</span>
+      <input id="c" type="text" inputmode="decimal" value="2" aria-label="coefficient c"><span>= 0</span>
+    </div>
+    <div class="row">
+      <button class="primary" id="solve">Solve &amp; plot</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="presets">
+      <h3>Examples</h3>
+      <div class="row" id="presets">
+        <button class="chip" data-v="1,-3,2">two real roots</button>
+        <button class="chip" data-v="1,-2,1">repeated root</button>
+        <button class="chip" data-v="1,0,4">complex roots</button>
+        <button class="chip" data-v="-2,4,3">opens down</button>
+        <button class="chip" data-v="0,2,-6">linear</button>
+      </div>
+    </div>
+    <div class="err" id="err"></div>
+    <div class="summary" id="summary">Enter coefficients and press Solve.</div>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h3>Plot</h3>
+      <canvas id="plot" width="900" height="520"></canvas>
+      <div class="plotmeta">
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--accent)"></i>curve</span>
+          <span><i class="swatch" style="background:var(--root)"></i>real root</span>
+          <span><i class="swatch" style="background:var(--vertex)"></i>vertex</span>
+        </div>
+        <div id="cursor">&nbsp;</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Results</h3>
+      <dl id="facts"></dl>
+    </section>
+
+    <section class="card">
+      <h3>Working</h3>
+      <ol class="steps" id="steps"></ol>
+    </section>
+  </div>
+</main>
+
+<script>
+(function () {
+  var canvas = document.getElementById('plot');
+  var ctx = canvas.getContext('2d');
+  var current = null;
+  var hover = null;
+
+  function css(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function fmt(v, digits) {
+    if (v === null || v === undefined) return '—';
+    if (!isFinite(v)) return '—';
+    var s = Number(v.toFixed(digits === undefined ? 6 : digits));
+    return String(s);
+  }
+
+  function rootText(r) {
+    if (Math.abs(r.im) < 1e-15) return 'x = ' + fmt(r.re);
+    return 'x = ' + fmt(r.re) + (r.im < 0 ? ' − ' : ' + ') + fmt(Math.abs(r.im)) + 'i';
+  }
+
+  function sizeCanvas() {
+    var ratio = window.devicePixelRatio || 1;
+    var w = canvas.clientWidth || 900;
+    var h = Math.round(w * 0.58);
+    canvas.width = Math.round(w * ratio);
+    canvas.height = Math.round(h * ratio);
+    canvas.style.height = h + 'px';
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    return { w: w, h: h };
+  }
+
+  function niceStep(span, targetTicks) {
+    var raw = span / targetTicks;
+    var mag = Math.pow(10, Math.floor(Math.log10(raw)));
+    var norm = raw / mag;
+    var mult = norm >= 5 ? 5 : norm >= 2 ? 2 : 1;
+    return mult * mag;
+  }
+
+  function draw() {
+    var size = sizeCanvas();
+    var W = size.w, H = size.h;
+    ctx.clearRect(0, 0, W, H);
+
+    if (!current || !current.plottable) {
+      ctx.fillStyle = css('--muted');
+      ctx.font = '14px ui-sans-serif, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(current ? 'Nothing to plot for this equation.' : 'No plot yet.', W / 2, H / 2);
+      return;
+    }
+
+    var pts = current.curve.points;
+    var xMin = current.curve.xMin, xMax = current.curve.xMax;
+    var yMin = Infinity, yMax = -Infinity;
+    for (var i = 0; i < pts.length; i++) {
+      if (pts[i][1] === null) continue;
+      yMin = Math.min(yMin, pts[i][1]);
+      yMax = Math.max(yMax, pts[i][1]);
+    }
+    yMin = Math.min(yMin, 0); yMax = Math.max(yMax, 0);
+    if (!(yMax - yMin > 0)) { yMin -= 1; yMax += 1; }
+    var padY = (yMax - yMin) * 0.1;
+    yMin -= padY; yMax += padY;
+
+    var m = { l: 52, r: 16, t: 14, b: 34 };
+    var pw = W - m.l - m.r, ph = H - m.t - m.b;
+    function X(x) { return m.l + (x - xMin) / (xMax - xMin) * pw; }
+    function Y(y) { return m.t + (yMax - y) / (yMax - yMin) * ph; }
+
+    // Grid + tick labels.
+    ctx.font = '11px ui-sans-serif, system-ui, sans-serif';
+    ctx.lineWidth = 1;
+    var sx = niceStep(xMax - xMin, 9);
+    ctx.strokeStyle = css('--grid');
+    ctx.fillStyle = css('--muted');
+    ctx.textAlign = 'center';
+    for (var gx = Math.ceil(xMin / sx) * sx; gx <= xMax; gx += sx) {
+      var px = Math.round(X(gx)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(px, m.t); ctx.lineTo(px, m.t + ph); ctx.stroke();
+      ctx.fillText(fmt(gx, 4), px, m.t + ph + 16);
+    }
+    var sy = niceStep(yMax - yMin, 7);
+    ctx.textAlign = 'right';
+    for (var gy = Math.ceil(yMin / sy) * sy; gy <= yMax; gy += sy) {
+      var py = Math.round(Y(gy)) + 0.5;
+      ctx.beginPath(); ctx.moveTo(m.l, py); ctx.lineTo(m.l + pw, py); ctx.stroke();
+      ctx.fillText(fmt(gy, 4), m.l - 8, py + 4);
+    }
+
+    // Axes.
+    ctx.strokeStyle = css('--axis');
+    ctx.lineWidth = 1.4;
+    if (yMin <= 0 && yMax >= 0) {
+      ctx.beginPath(); ctx.moveTo(m.l, Y(0)); ctx.lineTo(m.l + pw, Y(0)); ctx.stroke();
+    }
+    if (xMin <= 0 && xMax >= 0) {
+      ctx.beginPath(); ctx.moveTo(X(0), m.t); ctx.lineTo(X(0), m.t + ph); ctx.stroke();
+    }
+
+    // Axis of symmetry.
+    if (current.axis !== null && current.axis >= xMin && current.axis <= xMax) {
+      ctx.save();
+      ctx.setLineDash([5, 5]);
+      ctx.strokeStyle = css('--vertex');
+      ctx.globalAlpha = 0.55;
+      ctx.beginPath(); ctx.moveTo(X(current.axis), m.t); ctx.lineTo(X(current.axis), m.t + ph); ctx.stroke();
+      ctx.restore();
+    }
+
+    // Curve.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(m.l, m.t, pw, ph);
+    ctx.clip();
+    ctx.strokeStyle = css('--accent');
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.beginPath();
+    var started = false;
+    for (var j = 0; j < pts.length; j++) {
+      var y = pts[j][1];
+      if (y === null) { started = false; continue; }
+      var cx = X(pts[j][0]), cy = Y(y);
+      if (!started) { ctx.moveTo(cx, cy); started = true; } else { ctx.lineTo(cx, cy); }
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    function dot(x, y, color, label) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(X(x), Y(y), 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = css('--panel');
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      if (label) {
+        ctx.fillStyle = color;
+        ctx.textAlign = 'left';
+        ctx.font = '11.5px ui-sans-serif, system-ui, sans-serif';
+        ctx.fillText(label, X(x) + 8, Y(y) - 8);
+      }
+    }
+
+    for (var k = 0; k < current.roots.length; k++) {
+      var r = current.roots[k];
+      if (Math.abs(r.im) < 1e-15) dot(r.re, 0, css('--root'), 'x = ' + fmt(r.re, 4));
+    }
+    if (current.vertex) {
+      dot(current.vertex.x, current.vertex.y, css('--vertex'),
+          '(' + fmt(current.vertex.x, 4) + ', ' + fmt(current.vertex.y, 4) + ')');
+    }
+
+    // Hover crosshair.
+    if (hover !== null && hover >= xMin && hover <= xMax) {
+      var hy = (current.a * hover + current.b) * hover + current.c;
+      ctx.save();
+      ctx.strokeStyle = css('--muted');
+      ctx.globalAlpha = 0.5;
+      ctx.setLineDash([3, 4]);
+      ctx.beginPath(); ctx.moveTo(X(hover), m.t); ctx.lineTo(X(hover), m.t + ph); ctx.stroke();
+      ctx.restore();
+      if (hy >= yMin && hy <= yMax) dot(hover, hy, css('--ink'), null);
+      document.getElementById('cursor').textContent =
+        'x = ' + fmt(hover, 3) + ',  y = ' + fmt(hy, 3);
+    }
+  }
+
+  function render(data) {
+    current = data;
+    document.getElementById('summary').textContent = data.summary;
+
+    var facts = document.getElementById('facts');
+    facts.innerHTML = '';
+    var rows = [
+      ['Equation', data.equation],
+      ['Type', data.kind],
+      ['Discriminant', data.a === 0 ? '— (not quadratic)' : fmt(data.discriminant)]
+    ];
+    for (var i = 0; i < data.roots.length; i++) {
+      rows.push(['Root ' + (i + 1), rootText(data.roots[i])]);
+    }
+    if (!data.roots.length) rows.push(['Roots', 'none']);
+    if (data.vertex) {
+      rows.push(['Vertex', '(' + fmt(data.vertex.x) + ', ' + fmt(data.vertex.y) + ')']);
+      rows.push(['Axis of symmetry', 'x = ' + fmt(data.axis)]);
+      rows.push(['Opens', data.opensUp ? 'upward' : 'downward']);
+    }
+    rows.push(['y-intercept', fmt(data.yIntercept)]);
+    rows.forEach(function (row) {
+      var dt = document.createElement('dt'); dt.textContent = row[0];
+      var dd = document.createElement('dd'); dd.textContent = row[1];
+      facts.appendChild(dt); facts.appendChild(dd);
+    });
+
+    var steps = document.getElementById('steps');
+    steps.innerHTML = '';
+    data.steps.forEach(function (s) {
+      var li = document.createElement('li');
+      li.textContent = s;
+      steps.appendChild(li);
+    });
+
+    hover = null;
+    document.getElementById('cursor').innerHTML = '&nbsp;';
+    draw();
+  }
+
+  function solve() {
+    var err = document.getElementById('err');
+    err.textContent = '';
+    var q = ['a', 'b', 'c'].map(function (id) {
+      return id + '=' + encodeURIComponent(document.getElementById(id).value.trim() || '0');
+    }).join('&');
+
+    fetch('/api/solve?' + q)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.ok) {
+          err.textContent = data.error;
+          return;
+        }
+        render(data);
+      })
+      .catch(function (e) { err.textContent = 'Request failed: ' + e.message; });
+  }
+
+  document.getElementById('solve').addEventListener('click', solve);
+  document.getElementById('reset').addEventListener('click', function () {
+    ['a', 'b', 'c'].forEach(function (id, i) {
+      document.getElementById(id).value = ['1', '-3', '2'][i];
+    });
+    solve();
+  });
+  ['a', 'b', 'c'].forEach(function (id) {
+    document.getElementById(id).addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') solve();
+    });
+    document.getElementById(id).addEventListener('input', solve);
+  });
+  document.getElementById('presets').addEventListener('click', function (e) {
+    var v = e.target.getAttribute('data-v');
+    if (!v) return;
+    var parts = v.split(',');
+    ['a', 'b', 'c'].forEach(function (id, i) { document.getElementById(id).value = parts[i]; });
+    solve();
+  });
+
+  canvas.addEventListener('mousemove', function (e) {
+    if (!current || !current.plottable) return;
+    var rect = canvas.getBoundingClientRect();
+    var W = canvas.clientWidth;
+    var m = { l: 52, r: 16 };
+    var pw = W - m.l - m.r;
+    var t = (e.clientX - rect.left - m.l) / pw;
+    if (t < 0 || t > 1) { hover = null; draw(); return; }
+    hover = current.curve.xMin + t * (current.curve.xMax - current.curve.xMin);
+    draw();
+  });
+  canvas.addEventListener('mouseleave', function () {
+    hover = null;
+    document.getElementById('cursor').innerHTML = '&nbsp;';
+    draw();
+  });
+  window.addEventListener('resize', draw);
+
+  solve();
+})();
+</script>
+</body>
+</html>

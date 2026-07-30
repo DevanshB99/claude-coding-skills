@@ -111,3 +111,14 @@ Full procedure and the smell→refactoring table: `core/refactoring.md`.
 Write what was asked. Do not add speculative parameters, plugin hooks, base classes, or
 `# TODO: extend later` scaffolding for requirements that do not exist yet. Extensibility here means
 *easy to change*, not *pre-built for every future*.
+
+**This governs code architecture, not what the user can see.** A user interface is judged on whether it
+works well for a person, so the things that make it usable are the request, not scope creep: visible
+focus and hover states, feedback after every action, readable hierarchy and spacing, sensible defaults,
+and working on a small screen. Never strip those to look disciplined — "a front end" means a *good* one.
+If you would ship it to a user without embarrassment, it is in scope. See
+`languages/html-css/style.md`.
+
+Likewise these rules never justify making something worse: not less interactive, not less accessible, not
+uglier, not slower. If following a rule would degrade what the user experiences, the rule is being
+misapplied — say so and choose the better result.

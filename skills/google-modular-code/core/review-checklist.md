@@ -43,6 +43,13 @@ Run this against what you just wrote. Any "no" gets fixed before you present the
 - [ ] Python: type annotations on public signatures
 - [ ] C++: no exceptions, no raw owning pointers, `const` where it applies
 
+## User-facing quality (anything with a UI)
+- [ ] Every control has hover, visible focus, active, and disabled states
+- [ ] Every action produces visible feedback
+- [ ] Spacing comes from a scale; type has a clear hierarchy; contrast passes 4.5:1
+- [ ] Works at 360px wide with no horizontal page scroll
+- [ ] No rule was followed in a way that made the result worse for the user
+
 ## Scope
 - [ ] Nothing speculative — no unused parameters, hooks, or base classes with one implementation
 - [ ] Everything the user asked for is actually present

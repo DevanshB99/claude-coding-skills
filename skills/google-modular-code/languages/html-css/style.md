@@ -99,6 +99,37 @@ Distilled from the Google HTML/CSS Style Guide.
 }
 ```
 
+## Quality floor for anything a user sees
+
+The rules above are all *prohibitions* — they stop a stylesheet rotting, and say nothing about whether
+the result is any good. Structural conformance with a bare, unusable interface is a failure, not a pass.
+Every one of these is expected by default, without being asked:
+
+- **Interaction states on every control.** `:hover`, a **visible** `:focus-visible` ring (never
+  `outline: none` with nothing in its place), `:active`, and a distinct disabled appearance. A control
+  that does not respond to the pointer or the keyboard looks broken.
+- **Feedback for every action.** Something must visibly change on submit, save, or error — a result, a
+  message, a loading state. Never leave the user unsure whether the click registered.
+- **A spacing scale, not ad-hoc pixels.** Pick a step (4 or 8px) and use multiples via tokens.
+  Inconsistent gaps are the single most common reason a page reads as amateur.
+- **A type hierarchy.** Distinct sizes and weights for heading, body, and secondary text, so the eye can
+  find the important thing. Body text at 1rem or above; never grey-on-grey secondary text.
+- **Contrast that passes.** 4.5:1 for body text, 3:1 for large text and UI borders. Check it rather than
+  guessing.
+- **Both colour schemes** when the design has no reason to commit to one:
+  `@media (prefers-color-scheme: dark)`. Drive it from tokens so it is a handful of overrides.
+- **Responsive to a phone.** No horizontal scrolling of the page at 360px. Wide things — tables, code,
+  charts — scroll inside their own `overflow-x: auto` container.
+- **Errors next to their cause.** Field-level messages beside the field, not only a banner.
+
+Motion is optional and easy to overdo: a 150–200ms transition on colour and transform is enough, and
+always honour `@media (prefers-reduced-motion: reduce)`.
+
+**Out of scope here.** Brand identity, illustration, and elaborate visual design are deliberately not
+covered — this is a floor, not a design system. For charts and data display specifically, use dedicated
+data-visualisation guidance rather than improvising. Meeting the floor is required; going beyond it is a
+design task, and this skill will not guide it.
+
 ## Comments
 
 Explain only what the markup cannot say — a non-obvious layout constraint, a browser workaround, why an
