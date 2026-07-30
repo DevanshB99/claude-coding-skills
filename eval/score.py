@@ -14,6 +14,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import ast
 import dataclasses
 import re
 import sys
@@ -107,6 +108,41 @@ def _python_docstring_bloat(text: str) -> tuple[int, float]:
     return bloated, (100 * total_doc / code if code else 0.0)
 
 
+
+def _python_api(text: str) -> dict[str, float]:
+    """Returns docstring and annotation coverage, split by public vs internal.
+
+    Parsed with `ast`, not regex: a multi-line signature defeats pattern
+    matching, and conflating internal helpers with the public surface inverts
+    the result — the guides require docstrings on public API and exempt short
+    private helpers, so decomposing well lowers a naive whole-file average.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return {}
+
+    public = public_doc = public_annotated = internal = 0
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        if node.name.startswith("test_"):
+            continue
+        if node.name.startswith("_") and not node.name.startswith("__"):
+            internal += 1
+            continue
+        public += 1
+        public_doc += bool(ast.get_docstring(node))
+        public_annotated += node.returns is not None
+
+    return {
+        "public": public,
+        "public_doc_pct": 100 * public_doc / public if public else 0.0,
+        "public_annotated_pct": 100 * public_annotated / public if public else 0.0,
+        "internal": internal,
+    }
+
+
 def _python_function_lengths(text: str) -> list[int]:
     """Returns the line length of each top-level or method `def` block."""
     lines = text.splitlines()
@@ -130,9 +166,7 @@ def _python_function_lengths(text: str) -> list[int]:
 def score_python(files: list[Path]) -> list[Metric]:
     text = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in files)
     code, _ = _code_lines(text, "#")
-    defs = len(re.findall(r"^\s*(?:async\s+)?def\s", text, re.M))
-    annotated = len(re.findall(r"^\s*(?:async\s+)?def\s[^\n]*->", text, re.M))
-    docstrings = len(re.findall(r'^\s*(?:async\s+)?def\s[^\n]*:\s*\n\s*(?:"""|\'\'\')', text, re.M))
+    api = _python_api(text)
     narration = len(re.findall(r"^[ \t]+#", text, re.M))
     lengths = _python_function_lengths(text)
     bloated, doc_share = _python_docstring_bloat(text)
@@ -142,19 +176,21 @@ def score_python(files: list[Path]) -> list[Metric]:
         Metric("except Exception", len(re.findall(r"except\s+(?:base)?Exception", text, re.I))),
         Metric("handler bodies that pass", len(re.findall(r"except[^\n]*:\s*\n\s*pass\b", text))),
         Metric("try blocks total", len(re.findall(r"^\s*try\s*:", text, re.M))),
-        Metric("defs with a docstring", 100 * docstrings / defs if defs else 0.0,
+        Metric("public defs with a docstring", api.get("public_doc_pct", 0.0),
                lower_is_better=False, unit="%"),
+        Metric("public defs return-annotated", api.get("public_annotated_pct", 0.0),
+               lower_is_better=False, unit="%"),
+        Metric("public API surface", api.get("public", 0), lower_is_better=None),
+        Metric("internal helpers", api.get("internal", 0), lower_is_better=None),
         Metric("docstrings longer than their body", bloated),
         Metric("docstring lines per 100 code", doc_share, lower_is_better=None),
         Metric("narration # per 100 code", 100 * narration / code if code else 0.0),
         Metric("functions over %d lines" % LONG_FUNCTION_LINES,
                sum(1 for n in lengths if n > LONG_FUNCTION_LINES)),
         Metric("max function length", max(lengths) if lengths else 0, unit="lines"),
-        Metric("return-annotated defs", 100 * annotated / defs if defs else 0.0,
-               lower_is_better=False, unit="%"),
         Metric("mutable default args", len(re.findall(r"def\s[^\n]*=\s*(?:\[\]|\{\})", text))),
-        Metric("__name__ guard present", len(re.findall(r'if\s+__name__\s*==', text)),
-               lower_is_better=False),
+        Metric("__name__ guards", len(re.findall(r'if\s+__name__\s*==', text)),
+               lower_is_better=None),
         Metric("bare print( calls", len(re.findall(r"(?<![.\w])print\s*\(", text))),
     ]
 
@@ -228,9 +264,9 @@ def score_web(files: list[Path]) -> list[Metric]:
         Metric("lang on <html>", len(re.findall(r"<html\b[^>]*\blang\s*=", html, re.I)),
                lower_is_better=False),
         Metric("semantic landmarks", len(re.findall(r"<(?:main|nav|header|footer|article|section)\b",
-                                                   html, re.I)), lower_is_better=False),
+                                                   html, re.I)), lower_is_better=None),
         Metric("CSS custom properties", len(re.findall(r"--[a-z][\w-]*\s*:", css)),
-               lower_is_better=False),
+               lower_is_better=None),
     ]
 
 

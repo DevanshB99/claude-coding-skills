@@ -1,0 +1,20 @@
+.result-title {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+}
+
+.result-list {
+  display: grid;
+  gap: var(--space-sm) var(--space-md);
+  grid-template-columns: auto 1fr;
+  margin: var(--space-md) 0 0;
+}
+
+.result-list dt {
+  color: var(--colour-muted);
+}
+
+.result-list dd {
+  font-family: var(--font-mono);
+  margin: 0;
+}

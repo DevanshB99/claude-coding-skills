@@ -1,0 +1,43 @@
+.plot-panel-canvas {
+  margin-top: var(--space-md);
+}
+
+.plot {
+  height: auto;
+  max-width: 100%;
+}
+
+.plot-frame {
+  fill: none;
+}
+
+.plot-axis,
+.plot-tick {
+  stroke: var(--colour-border);
+  stroke-width: 1;
+}
+
+.plot-curve {
+  fill: none;
+  stroke: var(--colour-accent);
+  stroke-width: 2.5;
+}
+
+.plot-root {
+  fill: var(--colour-accent);
+}
+
+.plot-vertex {
+  fill: var(--colour-vertex);
+}
+
+.plot-tick-label {
+  fill: var(--colour-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-anchor: middle;
+}
+
+.plot-tick-label--y {
+  text-anchor: start;
+}

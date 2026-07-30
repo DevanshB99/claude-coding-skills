@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Quadratic calculator</title>
+    <link rel="stylesheet" href="/styles/main.css">
+  </head>
+  <body>
+    <header class="page-header">
+      <h1>Quadratic calculator</h1>
+      <p class="page-lead">Solve and plot ax² + bx + c = 0.</p>
+    </header>
+    <main class="page-main">
+      <form class="coefficients" id="coefficients" novalidate>
+        <div class="coefficients-field">
+          <label for="field-a">a</label>
+          <input class="coefficients-input" id="field-a" name="a"
+                 inputmode="decimal" value="1" autocomplete="off">
+        </div>
+        <div class="coefficients-field">
+          <label for="field-b">b</label>
+          <input class="coefficients-input" id="field-b" name="b"
+                 inputmode="decimal" value="-3" autocomplete="off">
+        </div>
+        <div class="coefficients-field">
+          <label for="field-c">c</label>
+          <input class="coefficients-input" id="field-c" name="c"
+                 inputmode="decimal" value="2" autocomplete="off">
+        </div>
+        <button class="coefficients-submit" type="submit">Solve</button>
+      </form>
+
+      <p class="notice" id="notice" role="alert" hidden></p>
+
+      <section class="result" id="result" hidden>
+        <h2 class="result-title" id="result-equation"></h2>
+        <dl class="result-list">
+          <dt>Roots</dt>
+          <dd id="result-roots"></dd>
+          <dt>Discriminant</dt>
+          <dd id="result-discriminant"></dd>
+          <dt>Vertex</dt>
+          <dd id="result-vertex"></dd>
+          <dt>Axis of symmetry</dt>
+          <dd id="result-axis"></dd>
+          <dt>Opens</dt>
+          <dd id="result-direction"></dd>
+        </dl>
+      </section>
+
+      <section class="plot-panel" id="plot-panel" hidden>
+        <h2 class="plot-panel-title">Plot</h2>
+        <div class="plot-panel-canvas" id="plot-canvas"></div>
+      </section>
+    </main>
+    <script src="/scripts/main.js"></script>
+  </body>
+</html>

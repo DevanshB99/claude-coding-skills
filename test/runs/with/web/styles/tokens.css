@@ -1,0 +1,25 @@
+:root {
+  --colour-accent: #2563eb;
+  --colour-border: #d6d9e0;
+  --colour-error: #b3261e;
+  --colour-muted: #5b6070;
+  --colour-surface: #fff;
+  --colour-text: #1b1d22;
+  --colour-vertex: #d97706;
+  --font-body: system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --radius: 6px;
+  --space-lg: 2rem;
+  --space-md: 1rem;
+  --space-sm: 0.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --colour-border: #3a3f4b;
+    --colour-error: #f2b8b5;
+    --colour-muted: #a8adbb;
+    --colour-surface: #16181d;
+    --colour-text: #eceef2;
+  }
+}

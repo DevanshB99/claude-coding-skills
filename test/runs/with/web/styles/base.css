@@ -1,0 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--colour-surface);
+  color: var(--colour-text);
+  font-family: var(--font-body);
+  line-height: 1.5;
+  margin: 0;
+}
+
+h1,
+h2 {
+  line-height: 1.2;
+  margin: 0;
+}
+
+input,
+button {
+  font: inherit;
+}

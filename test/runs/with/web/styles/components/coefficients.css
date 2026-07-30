@@ -1,0 +1,36 @@
+.coefficients {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+}
+
+.coefficients-field {
+  display: grid;
+  gap: var(--space-sm);
+}
+
+.coefficients-input {
+  border: 1px solid var(--colour-border);
+  border-radius: var(--radius);
+  color: inherit;
+  background: transparent;
+  font-family: var(--font-mono);
+  padding: var(--space-sm);
+  width: 7rem;
+}
+
+.coefficients-input:focus-visible,
+.coefficients-submit:focus-visible {
+  outline: 2px solid var(--colour-accent);
+  outline-offset: 2px;
+}
+
+.coefficients-submit {
+  background: var(--colour-accent);
+  border: 0;
+  border-radius: var(--radius);
+  color: #fff;
+  cursor: pointer;
+  padding: var(--space-sm) var(--space-md);
+}

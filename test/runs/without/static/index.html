@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quadratic Calculator</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main class="viz-root wrap">
+  <header class="head">
+    <h1>Quadratic Calculator</h1>
+    <p class="sub">Solve and plot <em>ax&sup2; + bx + c = 0</em>. Complex roots included.</p>
+    <button type="button" id="theme-toggle" class="ghost" aria-label="Toggle colour theme">
+      <span data-theme-label>Dark</span>
+    </button>
+  </header>
+
+  <form id="coefficients" class="card panel" novalidate>
+    <div class="fields">
+      <label class="field">
+        <span>a</span>
+        <input type="number" id="a" name="a" step="any" value="1" required
+               inputmode="decimal" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>b</span>
+        <input type="number" id="b" name="b" step="any" value="-3" required
+               inputmode="decimal" autocomplete="off">
+      </label>
+      <label class="field">
+        <span>c</span>
+        <input type="number" id="c" name="c" step="any" value="2" required
+               inputmode="decimal" autocomplete="off">
+      </label>
+      <button type="submit" class="primary">Solve &amp; plot</button>
+    </div>
+    <p class="equation" id="equation-preview" aria-live="polite">x&sup2; &minus; 3x + 2 = 0</p>
+    <p class="presets">
+      Try:
+      <button type="button" class="chip" data-preset="1,-3,2">two real roots</button>
+      <button type="button" class="chip" data-preset="1,-2,1">repeated root</button>
+      <button type="button" class="chip" data-preset="1,2,5">complex roots</button>
+      <button type="button" class="chip" data-preset="-2,4,1">opens downward</button>
+    </p>
+    <p class="error" id="error" role="alert" hidden></p>
+  </form>
+
+  <section class="card panel" id="results" hidden aria-labelledby="results-title">
+    <h2 id="results-title">Roots</h2>
+    <p class="hero" id="roots-hero"></p>
+    <p class="nature" id="nature"></p>
+    <dl class="stats" id="stats"></dl>
+  </section>
+
+  <section class="card panel" id="plot-panel" hidden aria-labelledby="plot-title">
+    <div class="panel-head">
+      <h2 id="plot-title">Graph</h2>
+      <div class="keys">
+        <span class="key"><i class="swatch curve"></i>curve</span>
+        <span class="key"><i class="swatch root"></i>real root</span>
+        <span class="key"><i class="swatch vertex"></i>vertex</span>
+      </div>
+    </div>
+    <div class="chart-holder">
+      <canvas id="chart" role="img" aria-label="Parabola plot"></canvas>
+      <div class="tooltip" id="tooltip" hidden></div>
+    </div>
+    <p class="axis-note" id="axis-note"></p>
+    <details class="table-view">
+      <summary>Data table</summary>
+      <div class="table-scroll">
+        <table id="points-table">
+          <caption>Sampled points along the curve</caption>
+          <thead><tr><th scope="col">x</th><th scope="col">y</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </details>
+  </section>
+
+  <section class="card panel" id="steps-panel" hidden aria-labelledby="steps-title">
+    <h2 id="steps-title">Working</h2>
+    <ol class="steps" id="steps"></ol>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

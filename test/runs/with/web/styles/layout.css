@@ -1,0 +1,27 @@
+.page-header,
+.page-main {
+  margin: 0 auto;
+  max-width: 44rem;
+  padding: 0 var(--space-md);
+}
+
+.page-header {
+  padding-top: var(--space-lg);
+}
+
+.page-lead {
+  color: var(--colour-muted);
+  margin: var(--space-sm) 0 0;
+}
+
+.page-main {
+  display: grid;
+  gap: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  padding-top: var(--space-lg);
+}
+
+.notice {
+  color: var(--colour-error);
+  margin: 0;
+}
