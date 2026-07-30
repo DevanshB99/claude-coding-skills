@@ -144,23 +144,22 @@ def _python_api(text: str) -> dict[str, float]:
 
 
 def _python_function_lengths(text: str) -> list[int]:
-    """Returns the line length of each top-level or method `def` block."""
-    lines = text.splitlines()
-    starts = [
-        (i, len(line) - len(line.lstrip()))
-        for i, line in enumerate(lines)
-        if re.match(r"\s*(async\s+)?def\s", line)
+    """Returns the line span of every function, parsed with `ast`.
+
+    An indentation heuristic gets this wrong in two ways that both inflate the
+    result: the last function in a file appears to run to EOF, absorbing any
+    trailing module-level code, and a method's body appears to extend past its
+    class. Use the parser.
+    """
+    try:
+        tree = ast.parse(text)
+    except SyntaxError:
+        return []
+    return [
+        node.end_lineno - node.lineno + 1
+        for node in ast.walk(tree)
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.end_lineno
     ]
-    lengths = []
-    for index, (start, indent) in enumerate(starts):
-        end = len(lines)
-        for later, later_indent in starts[index + 1 :]:
-            if later_indent <= indent:
-                end = later
-                break
-        body = [ln for ln in lines[start:end] if ln.strip()]
-        lengths.append(len(body))
-    return lengths
 
 
 def score_python(files: list[Path]) -> list[Metric]:

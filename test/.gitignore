@@ -1,2 +1,3 @@
 scored/
 runs-cpp/**/*.o
+scored-calc/

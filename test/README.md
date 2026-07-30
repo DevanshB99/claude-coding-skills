@@ -62,8 +62,8 @@ metric                               before    after   verdict
 try blocks total                          3        1   better
 public defs with a docstring           53.3     81.2   better
 public defs return-annotated           66.7      100   better
-functions over 40 lines                   3        0   better
-max function length                      82       38   better
+functions over 40 lines                   1        1   same       [corrected]
+max function length                      56       43   better     [corrected]
 narration # per 100 code                1.1      0.7   better
 bare print( calls                        10        4   better
 bare except:                              0        0   same
@@ -148,11 +148,22 @@ The last row is the one genuine correctness difference: the treatment arm's `_re
 escaping the web root and has a test for it. That came from the boundary-validation rule, not from any
 security instruction in the prompt.
 
+## Correction: the function-length figures above were wrong
+
+The rows marked `[corrected]` originally read **"functions over 40 lines 3 → 0"** and **"max function
+length 82 → 38"**. Both were inflated by a fourth scorer bug, found later while testing the calculator
+(`runs-calculator/`): `_python_function_lengths` used an indentation heuristic that made the *last*
+function in a file appear to run to end-of-file, absorbing trailing module-level code.
+
+Verified against `ast`, the real figures are **1 → 1** functions over 40 lines and **56 → 43** maximum
+length (`solve` → `_handler_class`). The direction still favours the treatment arm, but the magnitude was
+overstated and "3 → 0" was simply false. `eval/score.py` now measures spans with `ast`.
+
 ## This test found three bugs in the scorer
 
 Running the eval on real output — rather than on code I wrote myself — immediately exposed three defects
-in `eval/score.py`. All three are fixed, and they are worth recording because each produced a confident,
-wrong "WORSE":
+in `eval/score.py` — and a fourth surfaced later, described in the correction above. All are fixed, and
+they are worth recording because each produced a confident, wrong number:
 
 1. **Docstring detection used a regex** requiring `"""` on the line after `def ...:`. Multi-line
    signatures (common once parameters are annotated) defeated it, undercounting the treatment arm.

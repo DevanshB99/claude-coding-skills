@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Python Calculator</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="calculator" role="application" aria-label="Calculator">
+    <div class="screen">
+      <div class="history" id="history" aria-hidden="true"></div>
+      <output class="display" id="display" aria-live="polite">0</output>
+    </div>
+
+    <div class="keys">
+      <button class="key fn" data-action="clear">C</button>
+      <button class="key fn" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button class="key fn" data-action="negate" aria-label="Toggle sign">±</button>
+      <button class="key op" data-operator="/" aria-label="Divide">÷</button>
+
+      <button class="key" data-digit="7">7</button>
+      <button class="key" data-digit="8">8</button>
+      <button class="key" data-digit="9">9</button>
+      <button class="key op" data-operator="*" aria-label="Multiply">×</button>
+
+      <button class="key" data-digit="4">4</button>
+      <button class="key" data-digit="5">5</button>
+      <button class="key" data-digit="6">6</button>
+      <button class="key op" data-operator="-" aria-label="Subtract">−</button>
+
+      <button class="key" data-digit="1">1</button>
+      <button class="key" data-digit="2">2</button>
+      <button class="key" data-digit="3">3</button>
+      <button class="key op" data-operator="+" aria-label="Add">+</button>
+
+      <button class="key wide" data-digit="0">0</button>
+      <button class="key" data-action="decimal">.</button>
+      <button class="key equals" data-action="equals" aria-label="Equals">=</button>
+    </div>
+
+    <p class="hint">Math runs in Python on the server. Keyboard works too.</p>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
