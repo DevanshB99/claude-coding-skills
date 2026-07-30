@@ -50,6 +50,13 @@ Run this against what you just wrote. Any "no" gets fixed before you present the
 - [ ] Works at 360px wide with no horizontal page scroll
 - [ ] No rule was followed in a way that made the result worse for the user
 
+## Review pass discipline (when reviewing rather than writing)
+- [ ] Tier 1 and Tier 2 were applied as separate steps, not interleaved
+- [ ] No file had more than ~a third of its lines restructured; larger was proposed instead
+- [ ] The whole diff is small enough for the user to skim before testing
+- [ ] Nothing in Tier 3 was edited — error handling, concurrency, precision, public APIs
+- [ ] No test files were created
+
 ## Scope
 - [ ] Nothing speculative — no unused parameters, hooks, or base classes with one implementation
 - [ ] Everything the user asked for is actually present

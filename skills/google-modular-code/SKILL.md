@@ -25,10 +25,18 @@ why the tiers below exist. When unsure which tier a change falls in, treat it as
    which files to review. Never review files nobody touched.
 2. **Read each file completely**, first line to last. Do not sample.
 3. **Identify the language(s)** and load the rules from the table below.
-4. **Apply Tier 1 and Tier 2** edits.
-5. **Collect Tier 3** findings — do not edit them.
-6. **Report**: what you changed, grouped by file; then Tier 3 recommendations, each with the specific
-   change and why it alters behaviour.
+4. **Apply Tier 1 in full.** Stop. These are mechanical and need almost no review.
+5. **Apply Tier 2 as a second, separate step** — subject to the volume guard below. Never interleave it
+   with Tier 1: the safe changes must be reviewable without wading through the structural ones.
+6. **Collect Tier 3** findings — do not edit them.
+7. **Report** the two applied steps separately, then Tier 3 recommendations, each with the specific change
+   and why it alters behaviour.
+
+**Keep the diff small enough to read.** The user is about to test this code; a diff they cannot skim is no
+better than no review. If the total change approaches the size of the code itself, you have over-reached —
+apply Tier 1 only and propose the rest.
+
+Do not commit unless asked. If you do commit, **one commit per tier**, never both together.
 
 ## Tier 1 — always apply
 
@@ -48,6 +56,15 @@ Provably behaviour-preserving. No judgement call needed.
 Changes the shape and sometimes signatures. Safe when the code is **new and has no external callers** —
 the normal case for a just-generated file. If the file predates this session and may have callers you
 cannot see, move these to Tier 3.
+
+**Volume guard.** If Tier 2 edits to a file would touch more than roughly a third of its lines, do not
+apply them — describe them alongside the Tier 3 findings and let the user decide. A file needing that much
+restructuring is a design decision, not a cleanup, and the resulting diff cannot be reviewed by the person
+about to test the code. Tier 1 still applies to that file.
+
+Prefer the smallest set of Tier 2 edits that removes a real problem. Splitting one 90-line function is
+worth it; splitting five functions, renaming throughout, and extracting thirty constants in one pass
+produces a rewrite that nobody can check.
 
 - Extract a function from a long one; split a file that holds two responsibilities
 - Convert nested conditionals into guard clauses with early returns
@@ -108,10 +125,17 @@ Load only what the reviewed languages need.
 ## Reporting format
 
 ```
-## Applied
-src/solver.py    renamed `calc` → `solve_quadratic`; extracted `_discriminant`;
-                 removed 9 narration comments; annotated 4 signatures
+## Applied — Tier 1 (mechanical, provably safe)
+src/solver.py    renamed `calc` → `solve_quadratic`; removed 9 narration
+                 comments; annotated 4 signatures; named 3 magic literals
 web/style.css    replaced 6 hard-coded colours with tokens
+
+## Applied — Tier 2 (structural)
+src/solver.py    extracted `_discriminant` from `solve_quadratic` (was 74 lines)
+
+## Not applied — too invasive for one pass
+src/report.py    would need ~60% of the file restructured to separate rendering
+                 from aggregation. Worth doing, but as its own change. Apply?
 
 ## Recommended — behaviour changes, not applied
 src/server.py:121  `_coerce_number` uses `try: float(raw) except ValueError` as its
