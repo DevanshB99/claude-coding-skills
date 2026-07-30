@@ -101,7 +101,7 @@ The base stays untouched, and the variant is visible in the markup.
 
 ## Testing shape
 
-General policy is in `core/testing.md`. For HTML/CSS the checks are mostly static:
+**Only when the user asked for tests.** General policy is in `core/testing.md`. For HTML/CSS the checks are mostly static:
 
 - `html-validate` (or the W3C validator) in CI over every page — invalid markup is a bug you can catch
   for free.

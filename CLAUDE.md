@@ -5,7 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repository is
 
 A **Claude Code skill**, not an application. It contains condensed coding standards for Python, C++,
-JSON, and HTML/CSS, assembled for consumption by AI agents. There is no build system, no test suite, no
+JSON, and HTML/CSS, assembled for consumption by AI agents. The skill runs as a **post-generation review
+pass** — code is written unconstrained, then reviewed and brought up to standard without behaviour
+changing. Refactoring existing codebases is a separate, explicitly-invoked mode. There is no build system, no test suite, no
 linter, and no code to run — every file is markdown intended to be read as context, plus two formatter
 configs in `tooling/`.
 
@@ -59,7 +61,7 @@ Invariants to preserve:
 - **Token budget: ~1,800 target, 2,100 hard ceiling** (~7–8 KB). Past that, rules near the bottom stop
   being applied, silently, and nothing errors to tell you. Three files sit in the 1,900–2,100 band by
   deliberate exception — `cpp/style.md` (Google's C++ guide is ~4× the others), `python/style.md`, and
-  `core/refactoring.md`. Each is loaded alone rather than alongside a sibling, which is what makes the
+  `refactor/PROCEDURE.md`. Each is loaded alone rather than alongside a sibling, which is what makes the
   overage affordable. Do not add a fourth without moving content out first.
 - **Human-facing prose stays out of `skills/`.** `REFACTORING_WITH_CLAUDE.md` is at the root precisely
   because an agent should not pay tokens for advice addressed to the user.
@@ -76,6 +78,20 @@ Files are read by agents under token pressure, so:
 - Tables for anything enumerable (naming, load order, cost). Denser and more reliably parsed than prose.
 - Every derived file ends with an attribution line naming its upstream and licence.
 - No hedging. "Avoid X where practical" gets ignored; "Never X" gets followed.
+
+## The tier system is load-bearing
+
+`SKILL.md` sorts every change by risk: Tier 1 always applied, Tier 2 applied and reported, Tier 3 reported
+and **never** applied. It exists because the pass must preserve behaviour and there are usually no tests to
+prove it did.
+
+Do not promote a rule to a lower tier for convenience. Error handling sits in Tier 3 precisely because it
+is the highest-value rule *and* changes behaviour on bad input — that tension is the whole point, not an
+oversight. Anything touching concurrency, numeric precision, or a public API stays in Tier 3.
+
+**Tests are never generated unprompted**, by generation or by review. `core/testing.md` loads only on an
+explicit request, and its layout (`tests/feature/`, `tests/integration/`) exists so the directory can be
+deleted without touching working code.
 
 ## House positions
 

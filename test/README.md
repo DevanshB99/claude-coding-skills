@@ -249,6 +249,35 @@ interaction states on every control, feedback for every action, a spacing scale,
 ratios, both colour schemes, and 360px responsiveness — with an explicit statement that visual design
 beyond the floor is out of scope and should defer to dedicated guidance.
 
+## What these runs changed about the skill
+
+The two A/B runs are the reason the skill was restructured into a **post-generation review pass**. Three
+findings drove it:
+
+1. **The rules degraded front ends** (documented above). Applying them during generation cost
+   interactivity and design quality. Running afterwards means generation is never shaped by them.
+2. **The baselines were already good.** Both arms already avoided bare `except`, mutable defaults,
+   `!important`, raw `new`/`delete`, and C-style casts, and the C++ baseline was close to Google style
+   throughout. Rules that change nothing are pure cost in context.
+3. **Most of the measured wins are retrofittable.** Naming, docstrings, annotations, unparameterised
+   generics, dead code, `[[nodiscard]]`, lambda captures — all local edits with no ripple, so a review pass
+   captures them. The wins that are *not* retrofittable are architectural, and Tier 2 handles those while
+   the code is still fresh and has no external callers.
+
+### The test-count result is now a non-goal
+
+Both runs scored the treatment arm's extra tests as a win — 45 vs 8 in Python, 26 assertions vs none in
+C++. **That framing has been retired.** Unrequested test files are file sprawl, so neither generation nor
+review creates them now; `core/testing.md` loads only on an explicit request, and its
+`tests/feature/` + `tests/integration/` layout exists so the directory can be deleted without touching
+working code.
+
+Read those rows as a measurement of what the skill *used to* do, not as a benefit it still claims.
+
+The honest cost of that decision: with no tests, the review pass cannot verify it preserved behaviour.
+That is exactly why Tier 3 exists — error handling, concurrency, numeric precision, and public APIs are
+reported rather than edited, because nothing would catch a regression in them.
+
 ## Reproducing
 
 ```bash

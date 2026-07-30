@@ -12,31 +12,33 @@ generation. That is deliberate: advice addressed to the user costs the agent not
 
 Loading happens in three stages:
 
+**Stage 0 — code generation (0 tokens).** The model writes code with none of these rules in context.
+That is the design: nothing here shapes the solution. Only the `description` line below is visible, and it
+says explicitly not to use the skill while writing.
+
 **Stage 1 — always in context (~30 tokens).** At session start, only the frontmatter of `SKILL.md` is
 visible:
 
 ```yaml
 name: google-modular-code
-description: Write, refactor, or review Python, C++, JSON, or HTML/CSS to Google style guide
-  conventions plus modular-code practices. Use when generating new code, restructuring or modernising
-  existing and legacy code, or cleaning up a codebase — covers naming, layout, comment depth, error
-  handling without try/except, testing, safe refactoring, and function/module decomposition.
+description: Review already-written Python, C++, JSON, or HTML/CSS and bring it up to Google style
+  guide conventions plus modular-code standards, without changing behaviour. Use AFTER code has been
+  generated or edited — not while writing it. Fixes naming, layout, comment depth, type annotations,
+  dead code, decomposition, and module structure; reports error-handling problems rather than silently
+  altering them.
 ```
 
 This one line is the entire basis on which the skill gets picked. If the description doesn't match the
 work, nothing else in the repository is ever read. **The description is the most load-bearing text
-here** — it names all four languages and the specific concerns so that "write me a Python CLI",
-"clean up this stylesheet", and "modernise this legacy script" all match. The words *refactor*,
-*legacy*, and *cleaning up* are in there on purpose: without them the skill stays silent during exactly
-the work where it matters most.
+here**, and it now does two jobs: it names all four languages so a review of any of them matches, and it
+says **AFTER … not while writing it** so the model does not pull the rules in mid-generation. Deterministic
+triggering comes from the `Stop` hook in `install/`, not from this line.
 
-**Stage 2 — on trigger (~1,775 tokens).** The agent reads the body of `SKILL.md`: the load-order table
-and the non-negotiables (comment depth, error handling, modularity limits, scope discipline). For most
-requests this is where it stops. The non-negotiables are inline rather than in a linked file precisely
-so that the common case needs one file read.
+**Stage 2 — review triggered (~1,400 tokens).** The agent reads the body of `SKILL.md`: the scope
+procedure, the three tiers, and the load table. It then finds what changed via `git status` / `git diff`.
 
 **Stage 3 — on demand (~600–2,060 tokens each).** The agent follows the load-order table into
-`languages/<lang>/style.md`, or into `core/refactoring.md` first if the task is changing existing code.
+`languages/<lang>/style.md` for whichever languages actually changed.
 
 ## Cost
 
@@ -44,7 +46,7 @@ so that the common case needs one file read.
 |---|---|---|
 | `SKILL.md` frontmatter | ~30 | Always |
 | `SKILL.md` body | ~1,775 | Skill triggers |
-| `core/refactoring.md` | ~1,970 | **Any change to existing code** — before editing |
+| `refactor/PROCEDURE.md` | ~1,975 | Only on an explicit request to refactor an existing codebase |
 | `languages/python/style.md` | ~1,910 | Writing Python |
 | `languages/cpp/style.md` | ~2,060 | Writing C++ |
 | `languages/html-css/style.md` | ~1,275 | Writing HTML/CSS |
@@ -61,7 +63,7 @@ so that the common case needs one file read.
 
 - Small Python function: `SKILL.md` only — **~1,775**
 - New Python module, full detail: `SKILL.md` + `python/style.md` + `python/modular.md` — **~4,630**
-- Refactoring a legacy Python file: `SKILL.md` + `core/refactoring.md` + `core/testing.md` +
+- Refactoring a legacy Python file: `SKILL.md` + `refactor/PROCEDURE.md` + `core/testing.md` +
   `python/style.md` — **~6,900**
 - Worst case, every file: **~22,350**
 - The two upstream guides as published, for comparison: **~90,000** (Python ~30k, C++ ~62k)
@@ -93,7 +95,7 @@ Total: ~4,630 tokens of guidance. Four files read, thirteen available and skippe
 
 1. Description matches on *refactor* / *cleaning up* → skill triggers.
 2. Reads `SKILL.md`. The **"Changing existing code"** block fires before anything else: is there a test?
-3. There isn't → loads `core/refactoring.md` **before editing**, per step 2 of the load order.
+3. There isn't → loads `refactor/PROCEDURE.md`, because the user asked for a refactor explicitly.
 4. Applies the safety gate: writes a characterization test capturing current behaviour — including that
    malformed rows are silently dropped — and says so rather than fixing it.
 5. Works the procedure in order: rename → extract constants → guard clauses → extract functions →
@@ -143,6 +145,6 @@ Adding a language is two files and one table row:
 
 **Budget: ~1,800 target, 2,100 hard ceiling.** Past the ceiling the rules at the bottom stop being
 applied, and you will not notice because nothing errors — the code just quietly comes back wrong. Three
-files sit in the 1,900–2,100 band deliberately (`cpp/style.md`, `python/style.md`, `core/refactoring.md`)
+files sit in the 1,900–2,100 band deliberately (`cpp/style.md`, `python/style.md`, `refactor/PROCEDURE.md`)
 because each is loaded alone rather than alongside a sibling. If a fourth wants in, move content to an
 appendix file first — that is what `style-appendix.md` is for.

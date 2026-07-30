@@ -93,7 +93,7 @@ threshold in the logic.
 
 ## Testing shape
 
-General policy is in `core/testing.md`. Python mechanics:
+**Only when the user asked for tests.** General policy is in `core/testing.md`. Python mechanics:
 
 - `pytest`, not `unittest` — plain `assert`, less ceremony.
 - `tests/test_<module>.py` mirroring each source module.

@@ -1,23 +1,93 @@
 ---
 name: google-modular-code
-description: Write, refactor, or review Python, C++, JSON, or HTML/CSS to Google style guide conventions plus modular-code practices. Use when generating new code, restructuring or modernising existing and legacy code, or cleaning up a codebase — covers naming, layout, comment depth, error handling without try/except, testing, safe refactoring, and function/module decomposition.
+description: Review already-written Python, C++, JSON, or HTML/CSS and bring it up to Google style guide conventions plus modular-code standards, without changing behaviour. Use AFTER code has been generated or edited — not while writing it. Fixes naming, layout, comment depth, type annotations, dead code, decomposition, and module structure; reports error-handling problems rather than silently altering them.
 ---
 
-# Google style + modular code
+# Standards review pass
 
-Apply these rules whenever you generate or edit Python, C++, JSON, or HTML/CSS.
+You are reviewing code that already exists and works. Your job is to make it conform to the style and
+modularity standards **without changing what it does**.
 
-## Load order
+Do not use this while writing new code. Write the code first, unconstrained; this pass runs afterwards.
 
-1. Read the **non-negotiables** below. They apply to every language and are usually enough.
-2. **If the task is changing code that already exists** — cleanup, restructuring, modernising, "make this
-   better" — load `core/refactoring.md` **before editing anything**. It has a safety gate that comes first.
-3. Load `languages/<lang>/style.md` for the language you are writing.
-4. Load `languages/<lang>/modular.md` when creating new files, splitting a module, or designing an interface.
-5. Load anything else below only when the non-negotiables are not enough to decide.
+## The one hard rule
 
-**Paths come from this table — do not guess or explore.** Every language has `style.md` and `modular.md`;
-some also have `style-appendix.md` for rarely-needed rules.
+**Behaviour must be identical before and after.** Same inputs, same outputs, same side effects, same
+failure modes. If a change would alter what the program does — including what it does on bad input — it
+belongs in the report, not in the code.
+
+You almost certainly have no tests to verify this with (this pass does not create them). That is exactly
+why the tiers below exist. When unsure which tier a change falls in, treat it as the higher one.
+
+## Procedure
+
+1. **Find the scope.** `git status --porcelain` and `git diff` for what changed. If not a git repo, ask
+   which files to review. Never review files nobody touched.
+2. **Read each file completely**, first line to last. Do not sample.
+3. **Identify the language(s)** and load the rules from the table below.
+4. **Apply Tier 1 and Tier 2** edits.
+5. **Collect Tier 3** findings — do not edit them.
+6. **Report**: what you changed, grouped by file; then Tier 3 recommendations, each with the specific
+   change and why it alters behaviour.
+
+## Tier 1 — always apply
+
+Provably behaviour-preserving. No judgement call needed.
+
+- Rename variables, functions, parameters, and files to the language's convention
+- Delete comments that narrate code, section banners, commented-out code, changelog comments
+- Add or trim docstrings / declaration comments to state the contract; never longer than the body
+- Add type annotations; parameterise bare generics (`-> dict` → `-> dict[str, float]`)
+- Extract magic literals into named constants
+- Delete unreachable code and unused imports
+- Fix layout: indentation, line length, blank lines, import order, declaration order
+- Fix casing, quoting, and formatting to match the guide
+
+## Tier 2 — apply, and report
+
+Changes the shape and sometimes signatures. Safe when the code is **new and has no external callers** —
+the normal case for a just-generated file. If the file predates this session and may have callers you
+cannot see, move these to Tier 3.
+
+- Extract a function from a long one; split a file that holds two responsibilities
+- Convert nested conditionals into guard clauses with early returns
+- Group a long parameter list into a struct/dataclass
+- Replace a boolean flag parameter with an enum, or split into two functions
+- Move a function to the module where its data lives
+- Replace a stringly-typed field with an enum; replace an untyped dict return with a dataclass
+- Make an internal helper private (`_name`, unnamed namespace, `static`)
+- Move presentation strings out of a domain model
+
+## Tier 3 — report only, never edit
+
+These change behaviour, however wrong the current code looks.
+
+- **Error handling.** Replacing `try`/`except` with boundary validation, narrowing an exception type,
+  changing what is raised or returned on failure. All of it alters what happens on bad input. Describe
+  the change per `core/error-handling.md` and let the user decide.
+- Removing a handler that currently swallows an error — even a bare `except: pass`. Report it as a bug.
+- Anything touching threads, locks, async, or ordering
+- Deleting a branch that only *looks* unreachable
+- Changing a public API that callers outside the reviewed files may use
+- Changing numeric behaviour: precision, rounding, tolerance, integer width
+- Adding validation that would reject input the code currently accepts
+
+## Never do in this pass
+
+- **Do not create test files.** Not unit, not integration, not a quick sanity script. If the code needs
+  tests, say so in the report. Only write tests when the user explicitly asks; then follow
+  `core/testing.md` for layout.
+- Do not add features, options, hooks, or configuration
+- Do not upgrade or add dependencies
+- Do not reformat everything *and* restructure in one pass — if a formatter would touch every line, run
+  it as a separate step and say so
+- Do not degrade the user experience to satisfy a rule: never make a UI less interactive, less
+  accessible, or uglier. If a rule seems to require that, the rule is being misapplied
+- Do not touch generated files, vendored code, or lockfiles
+
+## Rules to load
+
+Load only what the reviewed languages need.
 
 | Language | style | modular | appendix |
 |---|---|---|---|
@@ -26,99 +96,32 @@ some also have `style-appendix.md` for rarely-needed rules.
 | JSON | `languages/json/style.md` | `languages/json/modular.md` | — |
 | HTML/CSS | `languages/html-css/style.md` | `languages/html-css/modular.md` | — |
 
-| Cross-language file | Load when |
+| Cross-language | Load when |
 |---|---|
-| `core/refactoring.md` | **Any change to existing code.** Two hats, safety gate, smell→fix table, legacy procedure |
-| `core/comments.md` | Deciding comment depth, or the user asked for comments |
-| `core/error-handling.md` | A failure path needs designing, or you are tempted to write `try` |
-| `core/modularity.md` | A structural decision — decomposition, coupling, extension |
-| `core/testing.md` | Writing tests, or before refactoring anything |
-| `core/review-checklist.md` | Self-check before handing code back |
+| `core/comments.md` | Deciding what prose to keep or cut |
+| `core/modularity.md` | A Tier 2 decomposition decision |
+| `core/error-handling.md` | Writing up a Tier 3 error-handling finding |
+| `core/review-checklist.md` | Final sweep before reporting |
+| `core/testing.md` | **Only** when the user asked for tests |
+| `refactor/PROCEDURE.md` | **Only** when the user asked to refactor an existing codebase |
 
-## Non-negotiables
+## Reporting format
 
-### Comments: minimal by default
+```
+## Applied
+src/solver.py    renamed `calc` → `solve_quadratic`; extracted `_discriminant`;
+                 removed 9 narration comments; annotated 4 signatures
+web/style.css    replaced 6 hard-coded colours with tokens
 
-Default to **comment level 0**: no narration. Write self-documenting code and let names carry the
-meaning. Add prose only where it earns its place.
+## Recommended — behaviour changes, not applied
+src/server.py:121  `_coerce_number` uses `try: float(raw) except ValueError` as its
+                   parse mechanism and returns a dummy 0.0 on failure. Validating
+                   first would reject some input the current code silently accepts.
+                   Apply? See core/error-handling.md.
 
-- **Always**: docstrings / declaration comments on public API surfaces (what it does, inputs,
-  outputs, failure modes). These are the contract, not commentary.
-- **Only when non-obvious**: a comment explaining *why* — a workaround, a chosen tradeoff, a
-  non-intuitive constraint, a reference to an algorithm or spec.
-- **Never unprompted**: line-by-line narration, comments restating the code, section banners,
-  `# increment counter`, tutorial asides, or a comment on every block.
-- **On request only**: if the user asks to "explain the code", "add comments", or "walk me through
-  it", escalate to level 1 or 2 as defined in `core/comments.md`. Do not pre-empt that request.
+## Notes
+No tests exist for the changed files, so behaviour preservation rests on the tiering
+above. Ask if you want tests written.
+```
 
-If a comment is needed to explain *what* a line does, rename things or extract a function instead.
-
-### Error handling: design out the failure, don't catch it
-
-Do not reach for `try`/`except` (or `try`/`catch`) as the primary way to make code robust. Build the
-robustness into the structure:
-
-1. **Validate at the boundary.** Check inputs once, at the entry point, and reject bad input with a
-   clear failure. Downstream functions then assume valid input.
-2. **Guard clauses first.** Handle the empty, missing, and out-of-range cases at the top of the
-   function and return early. No deep nesting.
-3. **Make the loop total.** Iterate over what exists rather than guessing and catching: filter the
-   collection, use `.get()` with a default, check `in` / `find() != end()`, bound the index. A loop
-   that cannot fail needs no handler.
-4. **Return outcomes, don't throw them.** Where failure is a normal result, return it explicitly —
-   `None`/`Optional`, a result struct, `absl::StatusOr`, an empty collection.
-5. **Narrow carve-out.** Genuinely unpredictable external boundaries — filesystem, network, database,
-   subprocess, third-party parse — may use a handler, but it must be: one specific exception type
-   (never bare `except:` / `catch (...)`), scoped to the single failing call, and it must either
-   recover meaningfully or re-raise with context. Never log-and-continue, never `pass`.
-
-C++ has no carve-out: Google style bans exceptions outright. See `languages/cpp/style.md`.
-
-### Naming: inclusive language
-
-Applies to identifiers, comments, and documentation in every language here. Use `primary`/`replica`,
-`leader`/`follower`, or `controller`/`worker` — never `master`/`slave`. Use `blocklist`/`allowlist` —
-never `blacklist`/`whitelist`. For a hypothetical person, use "they", or name the role.
-
-### Modularity: the shape of the code
-
-- One function does one thing. If you cannot name it without "and", split it.
-- Prefer ~40 lines per function as a soft ceiling; extract helpers past that.
-- No hidden state. A function's result depends only on its arguments; same inputs, same outputs.
-  Document any unavoidable side effect (file, socket, global, clock, RNG).
-- Group related functions into modules by responsibility, not by type. A module has one reason to change.
-- Depend on interfaces, not implementations, at the seams where you expect substitution (storage,
-  I/O, model choice). Elsewhere, do not add abstraction you cannot justify today.
-- Never duplicate logic; but do not fold two things into one just because they look alike today.
-- Configuration and constants live outside the logic — arguments, a config file, or module constants.
-  Never hard-code paths, credentials, or magic numbers inline.
-
-### Changing existing code
-
-Refactoring means changing structure **without** changing behaviour. Before restructuring anything:
-
-1. **Is there a test covering it?** If yes, run it first. If no, write one that captures what the code
-   does *now* — bugs included — before you touch it.
-2. **One hat at a time.** Refactor *or* change behaviour, never both in one step and never in one commit.
-3. **Never reformat and restructure together.** The diff becomes unreviewable.
-4. If the code cannot be tested at all, the first change is the one that makes it testable (extract the
-   I/O, pass it in). If you cannot even do that, say so and ask rather than proceeding.
-
-Full procedure and the smell→refactoring table: `core/refactoring.md`.
-
-### Scope discipline
-
-Write what was asked. Do not add speculative parameters, plugin hooks, base classes, or
-`# TODO: extend later` scaffolding for requirements that do not exist yet. Extensibility here means
-*easy to change*, not *pre-built for every future*.
-
-**This governs code architecture, not what the user can see.** A user interface is judged on whether it
-works well for a person, so the things that make it usable are the request, not scope creep: visible
-focus and hover states, feedback after every action, readable hierarchy and spacing, sensible defaults,
-and working on a small screen. Never strip those to look disciplined — "a front end" means a *good* one.
-If you would ship it to a user without embarrassment, it is in scope. See
-`languages/html-css/style.md`.
-
-Likewise these rules never justify making something worse: not less interactive, not less accessible, not
-uglier, not slower. If following a rule would degrade what the user experiences, the rule is being
-misapplied — say so and choose the better result.
+Be concrete and brief. The user is about to test this code — they need to know what moved.

@@ -77,7 +77,7 @@ config.json             # gitignored, real values
 
 ## Testing shape
 
-General policy is in `core/testing.md`. For JSON:
+**Only when the user asked for tests.** General policy is in `core/testing.md`. For JSON:
 
 - **Test the schema, not just the parser.** Keep a small fixture per case — one valid payload, and one
   per rejection reason (missing required field, wrong type, out-of-range enum).

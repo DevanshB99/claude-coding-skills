@@ -123,7 +123,7 @@ Call sites read by name, and a new option does not break existing callers.
 
 ## Testing shape
 
-General policy is in `core/testing.md`. C++ mechanics:
+**Only when the user asked for tests.** General policy is in `core/testing.md`. C++ mechanics:
 
 - GoogleTest: `<name>_test.cc` beside or under `tests/`, one per source file.
 - `TEST(SuiteName, DoesTheThingWhenCondition)` — the test name states the expectation.

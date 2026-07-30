@@ -1,11 +1,19 @@
 # Google style + modular code — a Claude skill
 
-A lightweight, agent-facing coding standard for **Python, C++, JSON, and HTML/CSS**. Drop it into Claude
-Code (or any agent that reads skill files) and generated code comes back consistent, modular, and
-readable instead of whatever the model felt like that day.
+A lightweight, agent-facing coding standard for **Python, C++, JSON, and HTML/CSS**, applied as a
+**review pass after code is written** rather than as rules during writing.
 
-It covers writing new code **and refactoring existing or legacy code** — including a safety gate that
-stops an agent from restructuring untested code, which is where most AI-assisted cleanup goes wrong.
+The flow: you prompt, the model builds whatever it thinks best with no style rules in its way, and once it
+finishes the skill reviews every changed file and brings it up to standard **without changing behaviour**.
+You get the model's unconstrained solution, then conformance on top.
+
+That ordering is deliberate and evidence-based. Applying the rules *during* generation measurably degraded
+front ends — "add nothing speculative" reads as "add no polish" — while adding little the model wasn't
+already doing. See [`test/README.md`](test/README.md) for the A/B runs behind that decision.
+
+Refactoring existing codebases is a separate, explicitly-invoked mode
+([`refactor/PROCEDURE.md`](skills/google-modular-code/refactor/PROCEDURE.md)) — it never runs automatically,
+because restructuring code that already has users needs a safety gate the review pass doesn't.
 
 Two openly licensed sources, combined:
 
@@ -36,41 +44,72 @@ So this repository does three things:
    handle errors, and how to change code that already works. All three are described below, because they
    are the rules that most change what an agent produces.
 
-Typical cost to an agent: **~1,775 tokens** for the always-loaded rules, **~4,600** for a language's full
-detail, **~6,900** for a guided legacy refactor. Compare with ~90,000 to read the Python and C++ guides as
-published.
+4. **Runs after generation, not during** — so the rules never shape, constrain, or flatten the solution
+   the model would otherwise have produced.
+
+Cost to an agent: **zero during generation**. The review pass costs ~1,400 tokens for `SKILL.md` plus
+~1,900–3,300 for the languages actually touched. Compare with ~90,000 to read the Python and C++ guides
+as published.
+
+## How it works
+
+```
+you prompt  →  model builds, unconstrained  →  review pass  →  you test
+                    (no rules in context)      (behaviour frozen)
+```
+
+The review pass sorts every possible change by risk, because **behaviour must be identical afterwards**
+and there are usually no tests to prove it:
+
+| Tier | Action | Examples |
+|---|---|---|
+| **1** | Always applied | Renaming, deleting narration comments and dead code, docstrings, type annotations, named constants, layout |
+| **2** | Applied, and reported | Extract function, guard clauses, split a module, parameter object, enum for a stringly-typed field |
+| **3** | **Reported, never applied** | Anything touching error handling, concurrency, numeric precision, or a public API |
+
+Tier 3 is the honest cost of "don't change functionality". Turning `try: float(x) except ValueError:` into
+a validation gate is the single highest-value fix this skill knows — and it changes what happens on bad
+input, so it can only ever be a recommendation you accept. The reviewer describes it precisely; it does not
+silently apply it.
+
+**Tests are never generated** unless you ask. When you do, they go in `tests/feature/` and
+`tests/integration/`, one file per module, nothing under `src/` — so deleting `tests/` can never break
+working code.
+
+Wiring: see [`install/README.md`](install/README.md) for the `Stop` hook (automatic) and the
+`/review-standards` command (manual).
 
 ## Structure
 
 ```
 skills/google-modular-code/
-├── SKILL.md                  # entry point: load order + the non-negotiables
+├── SKILL.md                  # the review pass: scope, the three tiers, load table
+├── refactor/PROCEDURE.md     # separate mode — existing codebases, explicit request only
 ├── core/                     # language-agnostic, loaded on demand
-│   ├── refactoring.md        # safe change to existing code — smell→fix catalogue
 │   ├── comments.md           # how deep to comment, and when not to
-│   ├── error-handling.md     # replacing try/except with validation
+│   ├── error-handling.md     # validation gates instead of try/except
 │   ├── modularity.md         # decomposition, coupling, extension
-│   ├── testing.md            # levels, characterization tests, fixtures
-│   └── review-checklist.md   # pre-handoff self-check
+│   ├── testing.md            # only when tests are asked for
+│   └── review-checklist.md   # final sweep
 └── languages/
     ├── python/{style,modular,style-appendix}.md
     ├── cpp/{style,modular,style-appendix}.md
     ├── json/{style,modular}.md
     └── html-css/{style,modular}.md
 
+install/                      # Stop hook, slash command, wiring instructions
 tooling/                      # pylintrc, .clang-format — the mechanical half
 eval/                         # prompt sets, legacy fixtures, scoring script
-REFACTORING_WITH_CLAUDE.md    # for the human directing the work, not the agent
+test/                         # A/B results: Python and C++, both arms' raw output
+REFACTORING_WITH_CLAUDE.md    # for the human directing a refactor, not the agent
 ```
 
 Every language folder holds **`style.md`** (from Google) and **`modular.md`** (from the QA of Code
 guidance); Python and C++ add a **`style-appendix.md`** for rules that come up rarely. Paths are listed
 in one table in `SKILL.md`, so an agent looks a path up rather than exploring the tree.
 
-The split exists so nothing is loaded that isn't needed. `SKILL.md` alone is usually enough; a language
-file gets pulled in when writing that language; `core/` files only when a judgment call needs the detail.
-The one exception is `core/refactoring.md`, which loads **before any edit to existing code**, because its
-first rule is a safety gate that has to fire before the agent starts changing things.
+The split exists so nothing is loaded that isn't needed. The reviewer reads `SKILL.md`, then only the
+language files for what actually changed, then a `core/` file when a judgement call needs the detail.
 
 ## The three opinions
 
@@ -105,7 +144,10 @@ C++ gets no carve-out — Google style bans exceptions outright, so the C++ rule
 throughout. Full treatment with before/after examples in
 [`core/error-handling.md`](skills/google-modular-code/core/error-handling.md).
 
-### Refactoring: never change behaviour and structure at once
+### Refactoring: a separate mode, never automatic
+
+Cleaning up an existing codebase is a different job from reviewing fresh output, and it only runs when you
+ask for it — `refactor/PROCEDURE.md` is not loaded by the review pass.
 
 People increasingly point agents at legacy codebases, and the default failure is predictable: a large,
 plausible, unreviewable diff that restructured the code, fixed a bug, reformatted every line, and changed
@@ -124,7 +166,7 @@ The rules that prevent it:
 A **smell → refactoring table** maps what an agent can see while reading (long function, long parameter
 list, nested conditionals, flag argument, magic literal, chained calls) to the standard named fix from
 Fowler's catalogue. Full procedure in
-[`core/refactoring.md`](skills/google-modular-code/core/refactoring.md).
+[`refactor/PROCEDURE.md`](skills/google-modular-code/refactor/PROCEDURE.md).
 
 **Directing this without reading code yourself:** [`REFACTORING_WITH_CLAUDE.md`](REFACTORING_WITH_CLAUDE.md)
 is written for you rather than the agent — three rules, the signals to push back on, and one sentence that

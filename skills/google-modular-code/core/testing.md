@@ -1,7 +1,24 @@
 # Testing
 
-Load when writing tests, or before refactoring anything (see `core/refactoring.md` — the test is what
-makes a refactor safe).
+**Load only when the user has explicitly asked for tests.** Neither code generation nor the review pass
+creates test files on its own — unrequested test files are file sprawl, and the user did not ask for them.
+
+## Layout: tests must be discardable
+
+Everything lives outside the source tree, so deleting `tests/` can never affect working code.
+
+```
+tests/
+├── feature/         # one file per source module, exercising it in isolation
+│   ├── test_transform.py
+│   └── test_ingest.py
+└── integration/     # paths that cross module boundaries
+    └── test_pipeline.py
+```
+
+- One test file per source module, named after it. Never a single `test_all` file.
+- Nothing under `src/`. No `conftest.py` outside `tests/`. No test helpers imported by production code.
+- Any fixture data lives in `tests/data/`, small and synthetic.
 
 ## What to test
 
@@ -16,14 +33,14 @@ Priority order when time is short:
 
 ## Three levels
 
-| Level | Scope | Speed | Use for |
+| Level | Directory | Scope | Use for |
 |---|---|---|---|
-| **Unit** | One function or class, no I/O | Milliseconds | All logic. The bulk of your tests. |
-| **Integration** | Two or more components together, real boundaries between them | Seconds | That the pieces actually fit — signatures agree, data survives the handoff |
-| **End-to-end** | The whole pipeline, entry point to output | Slow | One or two per pipeline. Proof it runs at all. |
+| **Feature** | `tests/feature/` | One module, no I/O | All logic. The bulk of your tests. |
+| **Integration** | `tests/integration/` | Several modules together, real boundaries between them | That the pieces fit — signatures agree, data survives the handoff |
+| **End-to-end** | `tests/integration/` | Entry point to output | One or two per pipeline. Proof it runs at all. |
 
-Most projects need many unit tests, a few integration tests, and one or two end-to-end tests. The
-inverse — mostly end-to-end — gives slow suites that tell you something broke but not where.
+Most projects need many feature tests, a few integration tests, and one or two end-to-end. The inverse —
+mostly end-to-end — gives slow suites that tell you something broke but not where.
 
 ## Structure
 
@@ -39,8 +56,8 @@ def test_revenue_by_region_sums_duplicate_regions():
 `test_<unit>_<condition>_<expectation>`. When a test fails, its name should tell you what broke without
 opening the file.
 
-Mirror the source tree: `transform.py` → `tests/test_transform.py`, `parser.cc` → `parser_test.cc`. Never
-make the reader search.
+Mirror the source tree inside `tests/feature/`: `transform.py` → `tests/feature/test_transform.py`,
+`parser.cc` → `tests/feature/parser_test.cc`. Never make the reader search.
 
 ## Reproducible and repeatable
 

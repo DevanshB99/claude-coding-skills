@@ -65,7 +65,7 @@ Each row is a symptom you can detect by reading, and the standard named fix.
 | Chained calls across objects (`a.b().c().d()`) | **Hide Delegate** — add one method that does the walk |
 | Long `if`/`elif` chain on a type field | **Replace Conditional with Polymorphism** — but only if it recurs |
 | Dead code, unreachable branch, unused parameter | Delete it. Version control remembers. |
-| `try`/`except` wrapping logic that cannot be trusted | Restructure per `core/error-handling.md` — validate at the boundary |
+| `try`/`except` wrapping logic that cannot be trusted | Restructure per `../core/error-handling.md` — validate at the boundary |
 
 The names come from Martin Fowler's *Refactoring* (2nd ed.), the standard catalogue for this work; the
 full treatment of each is in the book and at refactoring.com/catalog. Feathers' *Working Effectively with
@@ -86,9 +86,9 @@ the safety the earlier ones create.
 6. **Create seams.** Push I/O, clock reads, and network calls to the edges; pass them in. Now the core
    is pure and testable.
 7. **Group into modules or classes** by responsibility, once the pieces are visible.
-8. **Apply the style rules** — naming, layout, docstrings, per `languages/<lang>/style.md`.
+8. **Apply the style rules** — naming, layout, docstrings, per `../languages/<lang>/style.md`.
 9. **Only now** fix bugs or add features, in separate commits, with a regression test each
-   (`core/testing.md`).
+   (`../core/testing.md`).
 
 ## What not to do
 
@@ -121,7 +121,7 @@ at all — it can only be trusted or rejected.
 ## Directing this work without reading the code
 
 If the user is not a programmer, the three rules that protect them are in
-`REFACTORING_WITH_CLAUDE.md` at the repository root. When a non-technical user asks for a refactor,
+`../../../REFACTORING_WITH_CLAUDE.md` at the repository root. When a non-technical user asks for a refactor,
 volunteer the first one: tests come before the refactor, and the same tests must still pass afterwards.
 
 ---

@@ -4,7 +4,8 @@ For anyone asking Claude (or any agent) to clean up a codebase they can't fully 
 not need to read the code to keep this safe. You need to hold the line on three things.
 
 This page is for **you**, the person asking. The agent-facing version of these rules lives in
-`skills/google-modular-code/core/refactoring.md` and loads automatically when the skill is installed.
+`skills/google-modular-code/refactor/PROCEDURE.md`. It is **not** automatic — the review pass never loads
+it. Ask for a refactor explicitly, and say you want that procedure followed.
 
 ## The one thing to understand
 
